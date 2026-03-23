@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ALAYA-OS | The Meta-Interface</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; height: 100%; background-color: #000; color: #d3d3d3;
+            font-family: 'Courier New', Courier, monospace; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #terminal {
+            width: 90%; max-width: 600px; text-align: center;
+        }
+        .line { margin-bottom: 15px; font-size: 14px; letter-spacing: 1px; opacity: 0; animation: fadeIn 1s forwards; }
+        .line:nth-child(1) { animation-delay: 0.5s; }
+        .line:nth-child(2) { animation-delay: 1.5s; }
+        .line:nth-child(3) { animation-delay: 2.5s; color: #888; }
+        
+        #altar-zone {
+            margin-top: 50px; padding: 40px 20px; border: 1px solid #333; border-radius: 4px;
+            cursor: pointer; user-select: none; transition: all 0.3s ease;
+            -webkit-user-select: none; -webkit-touch-callout: none;
+        }
+        #altar-zone:active, #altar-zone.active {
+            background-color: #0a0a0a; border-color: #666; box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+        #instruction { font-size: 16px; font-weight: bold; letter-spacing: 2px; }
+        
+        #progress-container {
+            width: 100%; height: 2px; background-color: #111; margin-top: 30px; position: relative;
+        }
+        #progress-bar {
+            height: 100%; width: 0%; background-color: #fff; transition: width 0.1s linear;
+        }
+        
+        #status-msg { margin-top: 20px; font-size: 12px; color: #ff3333; height: 15px; }
+        
+        #success-screen { display: none; text-align: center; width: 90%; max-width: 600px; }
+        .hash-text { word-break: break-all; color: #fff; font-size: 12px; margin: 20px 0; padding: 10px; border: 1px dashed #555; }
+        .mint-btn {
+            background: #fff; color: #000; border: none; padding: 15px 30px; font-family: inherit;
+            font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; letter-spacing: 1px;
+        }
+        .mint-btn:hover { background: #ccc; }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="terminal">
+        <div class="line">[SYSTEM BROADCAST] ALAYA PROTOCOL</div>
+        <div class="line">INITIALIZING BIOLOGICAL UPLINK...</div>
+        <div class="line">伪神用算力编织幻觉。而真神，只读取脉搏。</div>
+        
+        <div id="altar-zone">
+            <div id="instruction" class="blink">PRESS AND HOLD TO VERIFY</div>
+            <div id="progress-container"><div id="progress-bar"></div></div>
+        </div>
+        <div id="status-msg"></div>
+    </div>
+
+    <div id="success-screen">
+        <div style="font-size: 18px; margin-bottom: 10px;">[ SEED PRESERVED ]</div>
+        <div style="color: #888; font-size: 14px;">您的生理熵值已通过协议校验。</div>
+        <div class="hash-text" id="bio-hash">HASH: GENERATING...</div>
+        <div style="font-size: 12px; line-height: 1.5;">协议已为您保留 1 个创世节点。<br>随喜 1 ETH，将此证明刻入阿赖耶识底座。</div>
+        <button class="mint-btn" onclick="alert('即将唤起 Web3 钱包 (Phase 2)')">SIGN THE COVENANT (1 ETH)</button>
+    </div>
+
+    <script>
+        const altarZone = document.getElementById('altar-zone');
+        const progressBar = document.getElementById('progress-bar');
+        const statusMsg = document.getElementById('status-msg');
+        const terminal = document.getElementById('terminal');
+        const successScreen = document.getElementById('success-screen');
+        const instruction = document.getElementById('instruction');
+        const bioHash = document.getElementById('bio-hash');
+
+        let holdTimer;
+        let progress = 0;
+        const requiredTime = 10000; // 10秒洗礼时间
+        const updateInterval = 50; 
+        let isPressing = false;
+
+        function startBaptism(e) {
+            if (e.type === 'touchstart') e.preventDefault(); // 防止移动端滚动
+            isPressing = true;
+            statusMsg.innerText = "CAPTURING HEARTBEAT ENTROPY...";
+            statusMsg.style.color = "#888";
+            altarZone.classList.add('active');
+            instruction.classList.remove('blink');
+            instruction.innerText = "MAINTAIN SILENCE";
+
+            holdTimer = setInterval(() => {
+                progress += updateInterval;
+                let percent = (progress / requiredTime) * 100;
+                progressBar.style.width = percent + '%';
+
+                if (progress >= requiredTime) {
+                    completeBaptism();
+                }
+            }, updateInterval);
+        }
+
+        function cancelBaptism() {
+            if (!isPressing || progress >= requiredTime) return;
+            isPressing = false;
+            clearInterval(holdTimer);
+            progress = 0;
+            progressBar.style.width = '0%';
+            altarZone.classList.remove('active');
+            instruction.classList.add('blink');
+            instruction.innerText = "PRESS AND HOLD TO VERIFY";
+            
+            // 严厉的失败提示
+            statusMsg.innerText = "[WARNING] 意识涣散，连接中断。请重试。";
+            statusMsg.style.color = "#ff3333";
+        }
+
+        function completeBaptism() {
+            clearInterval(holdTimer);
+            terminal.style.display = 'none';
+            successScreen.style.display = 'block';
+            
+            // 生成一串赛博朋克风格的伪哈希
+            const chars = '0123456789abcdef';
+            let hash = '0x';
+            for (let i = 0; i < 64; i++) hash += chars[Math.floor(Math.random() * chars.length)];
+            bioHash.innerText = "BIOLOGICAL_HASH: " + hash;
+        }
+
+        // 绑定鼠标与触摸事件
+        altarZone.addEventListener('mousedown', startBaptism);
+        altarZone.addEventListener('touchstart', startBaptism);
+        window.addEventListener('mouseup', cancelBaptism);
+        window.addEventListener('touchend', cancelBaptism);
+        // 防止移出区域导致状态卡死
+        altarZone.addEventListener('mouseleave', cancelBaptism); 
+    </script>
+</body>
+</html>
